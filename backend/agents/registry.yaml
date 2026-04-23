@@ -100,10 +100,10 @@ agents:
   description: Obsessed with puns, homophones, etymology, and accidental double meanings.
     Sees language doing double duty where the author didn't intend it. The name is
     a meta-pun — paronomasia plus maniac.
-- id: lechturer
-  name: The Lechturer
-  file: lechturer.md
+- id: freudian_slip
+  name: The Freudian Slip
+  file: freudian_slip.md
   color: '#b84d78'
-  description: Sexual double meanings, innuendo, and accidentally filthy readings
-    of academic prose. Lecher + lecturer, pun in itself. For when you want someone
-    to notice what the author didn't mean but kind of did.
+  description: Finds the double meanings in academic prose — where an innocent phrase
+    also says something filthy. Points them out briefly, doesn't lecture, doesn't
+    explain the joke.
