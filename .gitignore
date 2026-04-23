@@ -1,0 +1,35 @@
+# Runtime state (lives outside the repo by default, but guard against accidents)
+data/
+*.db
+*.db-journal
+
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+*.pyo
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+._*
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log

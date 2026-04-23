@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nachi</title>
+    <script>
+      window.addEventListener('error', (e) => {
+        const el = document.getElementById('diag')
+        if (el) el.textContent = 'ERROR: ' + (e.message || e.error || e)
+      })
+      window.addEventListener('unhandledrejection', (e) => {
+        const el = document.getElementById('diag')
+        if (el) el.textContent = 'REJECTED: ' + (e.reason?.message || e.reason)
+      })
+    </script>
+    <style>
+      #diag {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+        background: #fff5f5; color: #a63232; padding: 0.5rem 1rem;
+        font-family: ui-monospace, monospace; font-size: 0.85rem;
+        border-bottom: 1px solid #f0c0c0; white-space: pre-wrap;
+      }
+      #diag:empty { display: none; }
+      #loading {
+        position: fixed; inset: 0; display: flex; align-items: center;
+        justify-content: center; font-family: Georgia, serif; color: #6b6660;
+        font-size: 1.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="diag"></div>
+    <div id="loading">Nachi loading…</div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Hide loader once React mounts (main.jsx renders into #root).
+      const obs = new MutationObserver(() => {
+        if (document.querySelector('#root').children.length > 0) {
+          const l = document.getElementById('loading')
+          if (l) l.style.display = 'none'
+          obs.disconnect()
+        }
+      })
+      obs.observe(document.getElementById('root'), { childList: true })
+    </script>
+  </body>
+</html>

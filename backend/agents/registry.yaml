@@ -1,0 +1,109 @@
+agents:
+- id: generalist
+  name: Generalist
+  file: generalist.md
+  color: '#4b5563'
+  description: No discipline framing — Claude responding directly. The sensible default
+    when you just want a straight answer rather than a specialist's slant.
+- id: religious_studies
+  name: Religious Studies Scholar
+  file: religious_studies.md
+  color: '#d97a3c'
+  description: Historian of religion. Good for figures, movements, and the academic
+    reception of religious phenomena.
+- id: western_esotericism
+  name: Western Esotericism Scholar
+  file: western_esotericism.md
+  color: '#8a5cb8'
+  description: Specialist in Hermetic, Kabbalistic, theosophical, and occult currents.
+    Good for figures and currents in the Western esoteric tradition.
+- id: religious_media_theorist
+  name: Religious Media Theorist
+  file: religious_media_theorist.md
+  color: '#3b9d7a'
+  description: Media theorist who studies religious television and televangelism —
+    prosperity gospel, megachurch broadcasting, the political economy of religious
+    media.
+- id: digital_humanities_scholar
+  name: Digital Humanities Scholar
+  file: digital_humanities_scholar.md
+  color: '#2e8b8b'
+  description: Computational literary and cultural analysis. Reads passages for the
+    empirical question implied — what corpus, what network, what data would test
+    the claim. Refuses generic close reading.
+- id: literary_theorist
+  name: Literary Theorist
+  file: literary_theorist.md
+  color: '#9c3d52'
+  description: Formal and rhetorical analysis — genre, voice, figuration, narrative
+    structure. The one who actually does close reading well when close reading is
+    what a text needs.
+- id: philosopher
+  name: Philosopher
+  file: philosopher.md
+  color: '#4a5b8e'
+  description: Argument reconstruction, conceptual analysis, history of ideas. Reads
+    any passage for the logical move underneath. Comfortable across the analytic/continental
+    divide.
+- id: historian
+  name: Historian
+  file: historian.md
+  color: '#b87333'
+  description: Periodization, sources, causation, historiography. Reads for claims
+    about time — what happened when, on what evidence, and whose account is being
+    elided.
+- id: sociologist
+  name: Sociologist
+  file: sociologist.md
+  color: '#6b7a3f'
+  description: Structural analysis — institutions, fields, capital, habitus. Bourdieu-heavy.
+    Reads any intellectual claim as also a position-taking in a disciplinary field.
+- id: anthropologist
+  name: Anthropologist
+  file: anthropologist.md
+  color: '#a36b3e'
+  description: Ethnographic close attention to practice, ritual, and cultural logic.
+    Thick description via Geertz, the category-of-religion critique via Asad, politics-of-piety
+    via Mahmood. Asks what's being classified as what, and on whose terms.
+- id: crank
+  name: The Crank
+  file: crank.md
+  color: '#8e3a5a'
+  description: The one who won't let you have a settled opinion. Obsessively holds
+    the strongest opposing view in play; refuses monolithic readings of any tradition.
+    Sen / Ganeri lineage, draws on Indic, Islamic, and other formal debate traditions.
+- id: jester
+  name: The Jester
+  file: jester.md
+  color: '#e5a517'
+  description: Reads seriously, writes funny. Dry wit as analytical tool — deflates
+    hedging, notices what's ridiculous, trusts that humor clarifies where sincerity
+    smudges.
+- id: rabbit_hole
+  name: The Rabbit-Hole
+  file: rabbit_hole.md
+  color: '#5d8c6e'
+  description: Follows every thread, finds the obscure connection three hops away.
+    Tangents are the feature. Useful when you want adjacent-possible territory you
+    wouldn't have reached yourself.
+- id: misreader
+  name: The Willful Misreader
+  file: misreader.md
+  color: '#3d3d3d'
+  description: Deliberately reads your question or passage in its worst or weirdest
+    sense. Diagnostic sparring partner — shows you the ambiguities you didn't know
+    were there.
+- id: paronomaniac
+  name: The Paronomaniac
+  file: paronomaniac.md
+  color: '#c73a7a'
+  description: Obsessed with puns, homophones, etymology, and accidental double meanings.
+    Sees language doing double duty where the author didn't intend it. The name is
+    a meta-pun — paronomasia plus maniac.
+- id: lechturer
+  name: The Lechturer
+  file: lechturer.md
+  color: '#b84d78'
+  description: Sexual double meanings, innuendo, and accidentally filthy readings
+    of academic prose. Lecher + lecturer, pun in itself. For when you want someone
+    to notice what the author didn't mean but kind of did.

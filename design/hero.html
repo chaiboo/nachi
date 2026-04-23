@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nachi — at the threshold</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&family=JetBrains+Mono:wght@300..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pyre: #E8422C;
+    --ember: #F4A73A;
+    --gold: #F0C44A;
+    --yama: #1B1C22;
+    --threshold: #2A2F3A;
+    --threshold-2: #343B49;
+    --bone: #FFFFFF;
+    --kalpa: #5E6CE7;
+    --soma: #8B6FE8;
+    --vayu: #3FB8A8;
+    --muted: rgba(255,255,255,0.55);
+    --rule: rgba(255,255,255,0.14);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: var(--yama);
+    color: var(--bone);
+    font-family: 'Source Serif 4', Georgia, serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    overflow: hidden;
+  }
+
+  /* Threshold bar (the doorway rule) */
+  .top-bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.1rem 2rem 0.9rem;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    z-index: 10;
+  }
+  .top-bar::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: -1px;
+    height: 1px;
+    background: var(--pyre);
+    transform-origin: left;
+    animation: drawLine 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+  @keyframes drawLine {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  .brand {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'SOFT' 30, 'WONK' 1;
+    font-weight: 500;
+    font-size: 1.35rem;
+    letter-spacing: -0.01em;
+  }
+  .brand .dot {
+    display: inline-block;
+    width: 9px; height: 9px; background: var(--pyre);
+    border-radius: 50%;
+    margin-right: 0.45rem;
+    vertical-align: middle;
+    transform: translateY(-2px);
+    animation: pulseDot 2.4s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232, 66, 44, 0.6); }
+    50% { box-shadow: 0 0 0 8px rgba(232, 66, 44, 0); }
+  }
+
+  .tagline {
+    justify-self: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--muted);
+    letter-spacing: 0.01em;
+  }
+  .tagline em { color: var(--ember); font-style: normal; font-weight: 500; }
+
+  .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Main scene */
+  .scene {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1.15fr 1fr;
+    overflow: hidden;
+  }
+
+  /* Left column — Naciketas, the asker */
+  .asker {
+    position: relative;
+    padding: 2.4rem 2.4rem 2.4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid var(--rule);
+  }
+  .asker .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pyre);
+  }
+  .asker h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 30;
+    font-weight: 400;
+    font-size: 3.6rem;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin: 0.7rem 0 0;
+  }
+  .asker h1 em {
+    font-style: italic;
+    color: var(--ember);
+    font-weight: 300;
+  }
+  .asker .byline {
+    margin-top: 1.1rem;
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.02rem;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.78);
+    max-width: 30ch;
+  }
+  .asker .byline strong {
+    font-weight: 600;
+    color: var(--bone);
+  }
+
+  .question-box {
+    margin-top: 2rem;
+    padding: 1rem 1rem 1rem 1.1rem;
+    background: var(--threshold);
+    border-left: 2px solid var(--pyre);
+    border-radius: 0 4px 4px 0;
+    font-family: 'Source Serif 4', serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    line-height: 1.45;
+    min-height: 5.5rem;
+    position: relative;
+  }
+  .question-box .q-label {
+    position: absolute;
+    top: -0.6rem;
+    left: 0.8rem;
+    background: var(--yama);
+    padding: 0 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-style: normal;
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pyre);
+  }
+  .question-box .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    background: var(--ember);
+    vertical-align: -0.15em;
+    margin-left: 2px;
+    animation: blink 0.9s step-end infinite;
+  }
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .asker .refusal {
+    margin-top: 1.3rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .refusal .dot {
+    display: inline-block;
+    width: 7px; height: 7px; background: var(--pyre); border-radius: 50%;
+  }
+
+  /* Middle column — the door / threshold */
+  .door {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(ellipse at 50% 58%, rgba(232, 66, 44, 0.20), transparent 55%),
+      linear-gradient(180deg, var(--yama), var(--threshold));
+    overflow: hidden;
+  }
+  .door svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .door-caption {
+    position: absolute;
+    bottom: 1.6rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    max-width: 28ch;
+    line-height: 1.4;
+  }
+  .door-caption strong {
+    font-style: normal;
+    font-weight: 500;
+    color: var(--ember);
+  }
+
+  /* Right column — the scholars / fires */
+  .scholars {
+    position: relative;
+    padding: 2.4rem 2.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    border-left: 1px solid var(--rule);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.02), transparent 50%);
+  }
+  .scholars .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .scholar {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 0.85rem;
+    align-items: center;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.015);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    position: relative;
+  }
+  .scholar:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.3);
+  }
+  .scholar.active {
+    border-color: var(--pyre);
+    background: linear-gradient(90deg, rgba(232, 66, 44, 0.08), rgba(232, 66, 44, 0.02));
+  }
+  .scholar.active::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0; right: -1px;
+    width: 3px;
+    background: var(--pyre);
+  }
+
+  .flame {
+    width: 28px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .flame svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .flame .fill { fill: none; stroke: currentColor; stroke-width: 1.4; opacity: 0.55; }
+  .scholar.active .flame .fill {
+    fill: currentColor;
+    stroke: currentColor;
+    opacity: 1;
+    animation: flicker 1.4s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+  @keyframes flicker {
+    0%, 100% { transform: scaleY(1) translateY(0); }
+    20% { transform: scaleY(1.05) translateY(-0.5px); }
+    40% { transform: scaleY(0.96) translateY(0.4px); }
+    60% { transform: scaleY(1.02) translateY(-0.3px); }
+    80% { transform: scaleY(0.98) translateY(0.2px); }
+  }
+
+  .scholar-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.15;
+    color: var(--bone);
+  }
+  .scholar-sub {
+    font-family: 'Source Serif 4', serif;
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 2px;
+  }
+  .scholar-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    padding: 2px 6px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+  }
+
+  .scholars-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--rule);
+    font-family: 'Source Serif 4', serif;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .scholars-footer .plus {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-style: normal;
+    color: var(--ember);
+    font-size: 0.9em;
+  }
+
+  /* Bottom strip — the answer + the refusals */
+  .bottom {
+    display: grid;
+    grid-template-columns: 1.05fr 1.95fr 1fr;
+    border-top: 1px solid var(--rule);
+    background: var(--threshold);
+    min-height: 11.5rem;
+    position: relative;
+    z-index: 2;
+  }
+  .bottom > div {
+    padding: 1rem 2rem;
+    border-right: 1px solid var(--rule);
+  }
+  .bottom > div:last-child { border-right: none; }
+
+  .two-paths {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .two-paths .hdr {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.55rem;
+  }
+  .two-paths .pair {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.6rem;
+    align-items: baseline;
+  }
+  .two-paths .preyas,
+  .two-paths .shreyas {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.1;
+  }
+  .two-paths .preyas {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,255,255,0.3);
+  }
+  .two-paths .shreyas {
+    color: var(--ember);
+    text-align: right;
+  }
+  .two-paths .vs {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    padding-top: 0.25rem;
+  }
+  .two-paths .gloss {
+    margin-top: 0.55rem;
+    font-family: 'Source Serif 4', serif;
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-style: italic;
+    line-height: 1.4;
+  }
+
+  /* The answer — spoken by the active agent */
+  .answer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  .answer .who {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 0.45rem;
+  }
+  .answer .who .swatch {
+    width: 9px; height: 9px; border-radius: 50%;
+  }
+  .answer .who .src {
+    margin-left: auto;
+    font-size: 0.64rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.06em;
+  }
+  .answer .who .src.web {
+    background: var(--kalpa);
+    color: var(--bone);
+  }
+  .answer .who .src.model {
+    border: 1px solid var(--muted);
+    color: var(--muted);
+  }
+  .answer p {
+    font-family: 'Source Serif 4', serif;
+    font-size: 0.96rem;
+    line-height: 1.55;
+    margin: 0;
+    color: rgba(255,255,255,0.92);
+    max-width: 60ch;
+  }
+  .answer p em {
+    font-style: italic;
+    color: var(--ember);
+  }
+  .answer .mark {
+    position: absolute;
+    left: 0.9rem;
+    top: 1rem;
+    bottom: 1rem;
+    width: 2px;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  /* Right bottom — the refusal counter */
+  .refuse {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .refuse .hdr {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+  .refuse .count {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 144;
+    font-size: 3.2rem;
+    line-height: 1;
+    color: var(--pyre);
+    font-weight: 400;
+  }
+  .refuse .count .slash {
+    color: var(--muted);
+    font-size: 2.1rem;
+  }
+  .refuse .caption {
+    margin-top: 0.35rem;
+    font-family: 'Source Serif 4', serif;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--muted);
+    line-height: 1.35;
+    max-width: 22ch;
+  }
+
+  /* accessibility */
+  .sr-only {
+    position: absolute; left: -9999px;
+  }
+
+  /* Responsive — keep on one viewport */
+  @media (max-width: 1100px) {
+    .scene { grid-template-columns: 1fr 1.3fr 1fr; }
+    .asker h1 { font-size: 2.8rem; }
+  }
+  @media (max-width: 900px) {
+    .scene { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+    .asker, .scholars { border: none; border-bottom: 1px solid var(--rule); }
+    .bottom { grid-template-columns: 1fr; }
+    .bottom > div { border-right: none; border-bottom: 1px solid var(--rule); }
+    .tagline { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- Top bar: the threshold -->
+  <header class="top-bar">
+    <div class="brand"><span class="dot"></span>Nachi</div>
+    <div class="tagline">a room for asking <em>the real question</em> of a text</div>
+    <div class="meta">Kaṭha Upaniṣad · I · 1–29</div>
+  </header>
+
+  <!-- Main scene: asker / door / scholars -->
+  <main class="scene">
+
+    <!-- Naciketas side -->
+    <section class="asker">
+      <div>
+        <div class="label">The asker</div>
+        <h1>A child at <em>the door of Death</em>, asking the one question that matters.</h1>
+        <p class="byline">
+          Naciketas waited three nights without food on Yama's threshold. He was offered
+          wealth, kingdoms, a hundred years. He refused all of it and kept asking.
+          <strong>Nachi reads like that.</strong>
+        </p>
+      </div>
+
+      <div>
+        <div class="question-box">
+          <span class="q-label">Your question</span>
+          <span id="qtext"></span><span class="cursor"></span>
+        </div>
+        <div class="refusal">
+          <span class="dot"></span>
+          <span>Refusing easy answers since 1000 BCE</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- The door -->
+    <section class="door" aria-hidden="true">
+      <svg viewBox="0 0 400 560" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="doorGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1B1C22" />
+            <stop offset="100%" stop-color="#0C0D11" />
+          </linearGradient>
+          <radialGradient id="glow" cx="50%" cy="58%" r="50%">
+            <stop offset="0%" stop-color="#E8422C" stop-opacity="0.55" />
+            <stop offset="45%" stop-color="#E8422C" stop-opacity="0.12" />
+            <stop offset="100%" stop-color="#E8422C" stop-opacity="0" />
+          </radialGradient>
+          <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.2"/>
+          </filter>
+        </defs>
+
+        <!-- Glow inside the door -->
+        <rect x="0" y="0" width="400" height="560" fill="url(#glow)"/>
+
+        <!-- Door frame -->
+        <g stroke="#E8422C" stroke-width="1.4" fill="none" opacity="0.9">
+          <!-- Arch -->
+          <path d="M 100 480 L 100 200 Q 100 100 200 100 Q 300 100 300 200 L 300 480" />
+          <!-- Inner arch -->
+          <path d="M 120 478 L 120 210 Q 120 118 200 118 Q 280 118 280 210 L 280 478" opacity="0.45"/>
+          <!-- Floor rule -->
+          <line x1="40" y1="480" x2="360" y2="480" stroke="#E8422C"/>
+          <!-- Sill rule under floor -->
+          <line x1="60" y1="488" x2="340" y2="488" stroke="#E8422C" opacity="0.45"/>
+        </g>
+
+        <!-- Doorway interior (the dark) -->
+        <path d="M 120 478 L 120 210 Q 120 118 200 118 Q 280 118 280 210 L 280 478 Z"
+              fill="url(#doorGrad)"/>
+
+        <!-- Yama inside the door — a seated silhouette -->
+        <g transform="translate(200 330)" opacity="0.88">
+          <!-- lotus / seat -->
+          <ellipse cx="0" cy="115" rx="60" ry="7" fill="#E8422C" opacity="0.35"/>
+          <!-- body -->
+          <path d="M -40 100 L -30 30 Q -30 -20 0 -30 Q 30 -20 30 30 L 40 100 Z"
+                fill="#0C0D11" stroke="#F4A73A" stroke-width="1.1"/>
+          <!-- head -->
+          <circle cx="0" cy="-52" r="20" fill="#0C0D11" stroke="#F4A73A" stroke-width="1.1"/>
+          <!-- crown rays (subtle, not cartoon) -->
+          <g stroke="#F4A73A" stroke-width="1" opacity="0.75">
+            <line x1="0" y1="-78" x2="0" y2="-92"/>
+            <line x1="-12" y1="-74" x2="-20" y2="-86"/>
+            <line x1="12" y1="-74" x2="20" y2="-86"/>
+          </g>
+          <!-- staff (danda) -->
+          <line x1="38" y1="-20" x2="52" y2="110" stroke="#E8422C" stroke-width="1.3"/>
+          <circle cx="38" cy="-22" r="3.5" fill="#E8422C"/>
+          <!-- shoulders/arms hint -->
+          <path d="M -32 -10 Q -44 20 -38 50" stroke="#F4A73A" stroke-width="1" fill="none" opacity="0.5"/>
+          <path d="M 32 -10 Q 44 20 38 50" stroke="#F4A73A" stroke-width="1" fill="none" opacity="0.5"/>
+        </g>
+
+        <!-- Three fires outside the door, on the ground -->
+        <g id="threeFires">
+          <g class="fire" transform="translate(78 500)">
+            <path class="f-body" d="M 0 0 C -6 -10 -10 -18 -4 -30 C 0 -20 6 -24 2 -36 C 12 -26 14 -14 10 -4 C 8 2 4 4 0 0 Z"
+                  fill="#E8422C"/>
+            <circle cx="1" cy="-12" r="3" fill="#F0C44A"/>
+          </g>
+          <g class="fire" transform="translate(200 520)">
+            <path d="M 0 0 C -7 -12 -12 -22 -5 -36 C 0 -24 7 -28 2 -42 C 14 -32 17 -16 12 -4 C 9 3 4 5 0 0 Z"
+                  fill="#F4A73A"/>
+            <circle cx="1" cy="-15" r="3.5" fill="#FFFFFF"/>
+          </g>
+          <g class="fire" transform="translate(322 500)">
+            <path d="M 0 0 C -6 -10 -10 -18 -4 -30 C 0 -20 6 -24 2 -36 C 12 -26 14 -14 10 -4 C 8 2 4 4 0 0 Z"
+                  fill="#F0C44A"/>
+            <circle cx="1" cy="-12" r="2.5" fill="#FFFFFF"/>
+          </g>
+        </g>
+
+        <!-- Small Naciketas silhouette, at the threshold edge, left side -->
+        <g transform="translate(55 460)" opacity="0.9">
+          <!-- body -->
+          <path d="M 0 0 L -3 -34 Q -3 -48 0 -54 Q 3 -48 3 -34 L 3 0 Z"
+                fill="#0C0D11" stroke="#FFFFFF" stroke-width="0.9"/>
+          <!-- head -->
+          <circle cx="0" cy="-62" r="6" fill="#0C0D11" stroke="#FFFFFF" stroke-width="0.9"/>
+          <!-- hand extended toward the door -->
+          <line x1="3" y1="-28" x2="22" y2="-34" stroke="#FFFFFF" stroke-width="0.9"/>
+        </g>
+
+        <!-- Nights markers (three stars at top — the three nights of waiting) -->
+        <g fill="#F0C44A">
+          <circle cx="130" cy="60" r="2"/>
+          <circle cx="200" cy="45" r="2.5"/>
+          <circle cx="270" cy="60" r="2"/>
+        </g>
+        <g stroke="#F0C44A" stroke-width="0.6" opacity="0.5">
+          <line x1="130" y1="60" x2="200" y2="45"/>
+          <line x1="200" y1="45" x2="270" y2="60"/>
+        </g>
+      </svg>
+
+      <div class="door-caption">
+        Three nights. Three fires. <br/>
+        <strong>One question the reader will not drop.</strong>
+      </div>
+    </section>
+
+    <!-- The summoned scholars -->
+    <section class="scholars">
+      <div class="label">Summon a scholar</div>
+
+      <div class="scholar active" data-id="religion" style="color: var(--pyre)">
+        <div class="flame"><svg viewBox="0 0 28 36">
+          <path class="fill" d="M 14 34 C 4 30 2 22 8 12 C 10 18 15 16 12 6 C 20 10 24 20 22 28 C 20 33 17 35 14 34 Z"/>
+        </svg></div>
+        <div>
+          <div class="scholar-name">Religious Studies Scholar</div>
+          <div class="scholar-sub">genealogies, movements, comparisons</div>
+        </div>
+        <div class="scholar-key">1</div>
+      </div>
+
+      <div class="scholar" data-id="esoteric" style="color: var(--soma)">
+        <div class="flame"><svg viewBox="0 0 28 36">
+          <path class="fill" d="M 14 34 C 4 30 2 22 8 12 C 10 18 15 16 12 6 C 20 10 24 20 22 28 C 20 33 17 35 14 34 Z"/>
+        </svg></div>
+        <div>
+          <div class="scholar-name">Western Esotericism Scholar</div>
+          <div class="scholar-sub">Theosophy, Hermeticism, occult currents</div>
+        </div>
+        <div class="scholar-key">2</div>
+      </div>
+
+      <div class="scholar" data-id="media" style="color: var(--vayu)">
+        <div class="flame"><svg viewBox="0 0 28 36">
+          <path class="fill" d="M 14 34 C 4 30 2 22 8 12 C 10 18 15 16 12 6 C 20 10 24 20 22 28 C 20 33 17 35 14 34 Z"/>
+        </svg></div>
+        <div>
+          <div class="scholar-name">Media Ecosystems Scholar</div>
+          <div class="scholar-sub">discourse, distribution, platform logic</div>
+        </div>
+        <div class="scholar-key">3</div>
+      </div>
+
+      <div class="scholar" data-id="philology" style="color: var(--ember)">
+        <div class="flame"><svg viewBox="0 0 28 36">
+          <path class="fill" d="M 14 34 C 4 30 2 22 8 12 C 10 18 15 16 12 6 C 20 10 24 20 22 28 C 20 33 17 35 14 34 Z"/>
+        </svg></div>
+        <div>
+          <div class="scholar-name">Sanskrit Philologist</div>
+          <div class="scholar-sub">text, translation, terminology</div>
+        </div>
+        <div class="scholar-key">4</div>
+      </div>
+
+      <div class="scholars-footer">
+        <span class="plus">+</span> Name your own specialist. Ask again when they hedge.
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom strip: paths / answer / refusal count -->
+  <footer class="bottom">
+    <div class="two-paths">
+      <div class="hdr">The choice the app keeps asking</div>
+      <div class="pair">
+        <div class="preyas">preyas</div>
+        <div class="vs">↔</div>
+        <div class="shreyas">śreyas</div>
+      </div>
+      <div class="gloss">the pleasing answer vs. the true one. Nachi defaults to the second.</div>
+    </div>
+
+    <div class="answer" id="answer">
+      <div class="mark" style="color: var(--pyre)"></div>
+      <div class="who">
+        <span class="swatch" id="ansSwatch" style="background: var(--pyre)"></span>
+        <span id="ansName">Religious Studies Scholar</span>
+        <span class="src web" id="ansSrc">web · 3 sources</span>
+      </div>
+      <p id="ansText">
+        Olcott co-founded the Theosophical Society with Blavatsky in 1875 —
+        a central node in the transnational traffic between Victorian occultism
+        and South Asian reform movements. For Griscom's network specifically,
+        <em>he's the hinge</em>: the reason "Order of the Living Christ" reads Esoteric-Christian
+        rather than Spiritualist.
+      </p>
+    </div>
+
+    <div class="refuse">
+      <div class="hdr">Answers refused today</div>
+      <div class="count"><span id="refuseN">7</span><span class="slash"> / 11</span></div>
+      <div class="caption">when there isn't a source, the scholar says so.</div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // --- Typewriter for the question ---
+  const QUESTIONS = [
+    'who is Henry Steel Olcott?',
+    'has Josephson-Storm engaged with this claim?',
+    'what does Griscom mean by "Outer Court"?',
+    'is there primary-source evidence for the $400k?',
+    'where does "world religions" come from as a category?',
+  ];
+  const qEl = document.getElementById('qtext');
+  let qi = 0, ci = 0, forward = true;
+
+  function tick() {
+    const q = QUESTIONS[qi];
+    if (forward) {
+      ci++;
+      qEl.textContent = q.slice(0, ci);
+      if (ci >= q.length) { forward = false; setTimeout(tick, 2600); return; }
+      setTimeout(tick, 40 + Math.random() * 30);
+    } else {
+      ci--;
+      qEl.textContent = q.slice(0, ci);
+      if (ci <= 0) { forward = true; qi = (qi + 1) % QUESTIONS.length; setTimeout(tick, 320); return; }
+      setTimeout(tick, 18);
+    }
+  }
+  tick();
+
+  // --- Scholar selection / answer ---
+  const ANSWERS = {
+    religion: {
+      color: 'var(--pyre)',
+      name: 'Religious Studies Scholar',
+      src: 'web · 3 sources',
+      srcClass: 'web',
+      text: 'Olcott co-founded the Theosophical Society with Blavatsky in 1875 — a central node in the transnational traffic between Victorian occultism and South Asian reform movements. For Griscom\'s network specifically, <em>he\'s the hinge</em>: the reason "Order of the Living Christ" reads Esoteric-Christian rather than Spiritualist.'
+    },
+    esoteric: {
+      color: 'var(--soma)',
+      name: 'Western Esotericism Scholar',
+      src: 'web · 5 sources',
+      srcClass: 'web',
+      text: 'Hanegraaff\'s frame would put the "Outer Court" language directly in the Rosicrucian lineage — specifically the Order of the Golden Dawn\'s grade structure Griscom would have absorbed through Waite. <em>Not Spiritualist.</em> Not even Theosophical in the strict sense — this is ritual-magic vocabulary.'
+    },
+    media: {
+      color: 'var(--vayu)',
+      name: 'Media Ecosystems Scholar',
+      src: 'model only',
+      srcClass: 'model',
+      text: 'I don\'t have primary sources on the Griscom circulation numbers. <em>I\'m declining to speculate.</em> What I can say is that turn-of-century occult periodicals typically ran 2k–8k, so the $400k figure would be extraordinary and demands a source.'
+    },
+    philology: {
+      color: 'var(--ember)',
+      name: 'Sanskrit Philologist',
+      src: 'web · 2 sources',
+      srcClass: 'web',
+      text: '<em>Nachiketas</em> — नचिकेतस् — literally "not-yet-perceived," from <em>na + cikit</em>. The child is named for the thing he is about to find out. The Kaṭha is also called the "Naciketa-Upaniṣad" in some manuscripts because he is both the student and the eponym of the highest fire-sacrifice Yama teaches.'
+    }
+  };
+
+  const scholars = document.querySelectorAll('.scholar');
+  const ansText = document.getElementById('ansText');
+  const ansName = document.getElementById('ansName');
+  const ansSrc = document.getElementById('ansSrc');
+  const ansSwatch = document.getElementById('ansSwatch');
+  const ansMark = document.querySelector('#answer .mark');
+
+  let refusals = 7;
+  const refuseN = document.getElementById('refuseN');
+
+  function selectScholar(el) {
+    scholars.forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    const id = el.dataset.id;
+    const a = ANSWERS[id];
+    ansName.textContent = a.name;
+    ansSwatch.style.background = a.color;
+    ansMark.style.color = a.color;
+    ansSrc.className = 'src ' + a.srcClass;
+    ansSrc.textContent = a.src;
+    ansText.innerHTML = a.text;
+
+    if (a.srcClass === 'model' && a.text.toLowerCase().includes('declining')) {
+      refusals++;
+      refuseN.textContent = refusals;
+    }
+  }
+
+  scholars.forEach(el => {
+    el.addEventListener('click', () => selectScholar(el));
+  });
+
+  // Keyboard shortcut
+  document.addEventListener('keydown', (e) => {
+    const map = { '1': 'religion', '2': 'esoteric', '3': 'media', '4': 'philology' };
+    const id = map[e.key];
+    if (id) {
+      const el = document.querySelector(`.scholar[data-id="${id}"]`);
+      if (el) selectScholar(el);
+    }
+  });
+
+  // --- Subtle ambient motion: flicker the three fires in the SVG ---
+  const fires = document.querySelectorAll('#threeFires .fire');
+  let t = 0;
+  function animateFires() {
+    t += 0.03;
+    fires.forEach((f, i) => {
+      const s = 1 + Math.sin(t * (1.3 + i * 0.4) + i) * 0.06;
+      const sy = 1 + Math.sin(t * (1.7 + i * 0.3) + i * 2) * 0.08;
+      const tx = f.getAttribute('transform').match(/translate\(([^)]+)\)/)[1];
+      f.setAttribute('transform', `translate(${tx}) scale(${s}, ${sy})`);
+    });
+    requestAnimationFrame(animateFires);
+  }
+  animateFires();
+</script>
+
+</body>
+</html>
