@@ -194,7 +194,7 @@ export default function PDFViewer({
                               top: r.y * size.h,
                               width: r.w * size.w,
                               height: r.h * size.h,
-                              background: hexToRgba(ann.color, 0.28),
+                              background: hexToRgba(ann.color, 0.14),
                               borderBottom: `2px solid ${ann.color}`,
                             }}
                             title={

@@ -11,6 +11,7 @@ export default function ChatPanel({
   agents,
   agentId,
   setAgentId,
+  setAgentIdEphemeral,
   documentId,
   pendingAction,
   clearPendingAction,
@@ -32,7 +33,8 @@ export default function ChatPanel({
   const [msgPopup, setMsgPopup] = useState(null)
   const [replyState, setReplyState] = useState(null) // {conversationId, quote}
   const [replyText, setReplyText] = useState('')
-  const [alsoAskLoadingId, setAlsoAskLoadingId] = useState(null)
+  // { convId, agentId } identifying the specific also-ask chip in flight.
+  const [alsoAskLoading, setAlsoAskLoading] = useState(null)
   const convRefs = useRef({})
 
   useEffect(() => {
@@ -83,9 +85,23 @@ export default function ChatPanel({
     }
   }, [pendingAction, documentId, clearPendingAction, refreshAll])
 
+  // The scholar's default "do your thing" label. Used when the user hits submit
+  // with an empty textarea — the action_prompt (or the action label, if no
+  // richer prompt is set) becomes the question sent to the scholar.
+  const activeAgent = agents.find((a) => a.id === agentId)
+  const scholarAction = activeAgent?.action || 'Ask'
+  const scholarDefaultPrompt =
+    activeAgent?.action_prompt?.trim() || scholarAction
+
   async function handleAskSubmit(e) {
     e.preventDefault()
-    if (!pendingAction || !question.trim() || !documentId || !agentId) return
+    if (!pendingAction || !documentId || !agentId) return
+    const typed = question.trim()
+    const prompt = typed || scholarDefaultPrompt
+    // When no text was typed, store the scholar's short action label (e.g.
+    // "Joke") as the user-visible chat message instead of the full few-shot
+    // prompt that actually goes to Claude.
+    const displayQuestion = typed ? null : scholarAction
     setLoading(true)
     setError(null)
     try {
@@ -97,7 +113,8 @@ export default function ChatPanel({
         page: pendingAction.page,
         rects: pendingAction.rects,
         use_full_book: useFullBook,
-        question: question.trim(),
+        question: prompt,
+        display_question: displayQuestion,
       })
       setQuestion('')
       clearPendingAction()
@@ -148,7 +165,26 @@ export default function ChatPanel({
         rects = null
       }
     }
-    setAlsoAskLoadingId(conv.id)
+
+    // If the original user message was a scholar's default (either the
+    // short action label like "Joke", OR the full action_prompt that was
+    // stored before we added display_question handling), use the TARGET
+    // scholar's own framing instead of forwarding the original scholar's
+    // prompt. Otherwise pass through the user's actual typed question.
+    const target = agents.find((a) => a.id === targetAgentId)
+    const content = firstUser.content || ''
+    const isShortAction = agents.some((a) => a.action === content)
+    const isFullActionPrompt = agents.some(
+      (a) => a.action_prompt && a.action_prompt.trim() === content.trim(),
+    )
+    const looksLikeAction = isShortAction || isFullActionPrompt
+    const prompt =
+      looksLikeAction && target
+        ? target.action_prompt?.trim() || target.action || 'Ask'
+        : content
+    const displayQuestion = looksLikeAction ? target?.action || 'Ask' : null
+
+    setAlsoAskLoading({ convId: conv.id, agentId: targetAgentId })
     setError(null)
     try {
       const res = await ask({
@@ -159,18 +195,32 @@ export default function ChatPanel({
         page: conv.page,
         rects,
         use_full_book: false,
-        question: firstUser.content,
+        question: prompt,
+        display_question: displayQuestion,
       })
       await refreshAll()
+      // Make the top-of-panel scholar dropdown follow the user's choice,
+      // but don't persist it as the doc's default (this was a one-off).
+      setAgentIdEphemeral?.(targetAgentId)
       if (res?.conversation_id) {
         setFocusConversationId?.(res.conversation_id)
       }
     } catch (err) {
       setError(String(err.message || err))
     } finally {
-      setAlsoAskLoadingId(null)
+      setAlsoAskLoading(null)
     }
   }
+
+  // Global cursor feedback: any in-flight request puts the whole page into
+  // progress state so the user always has a visual signal, not just the chip.
+  useEffect(() => {
+    const busy = loading || alsoAskLoading !== null
+    const root = document.documentElement
+    if (busy) root.classList.add('nachi-busy')
+    else root.classList.remove('nachi-busy')
+    return () => root.classList.remove('nachi-busy')
+  }, [loading, alsoAskLoading])
 
   async function handleReplySubmit(e) {
     e.preventDefault()
@@ -417,18 +467,28 @@ export default function ChatPanel({
                   <span className="also-ask-label">Also ask:</span>
                   {agents
                     .filter((a) => a.id !== c.agent_id)
-                    .map((a) => (
-                      <button
-                        key={a.id}
-                        className="also-ask-chip"
-                        style={{ borderColor: a.color, color: a.color }}
-                        onClick={() => handleAlsoAsk(c, a.id)}
-                        disabled={alsoAskLoadingId === c.id}
-                        title={`Ask ${a.name} the same question`}
-                      >
-                        {alsoAskLoadingId === c.id ? '…' : a.name}
-                      </button>
-                    ))}
+                    .map((a) => {
+                      const isThisOne =
+                        alsoAskLoading?.convId === c.id &&
+                        alsoAskLoading?.agentId === a.id
+                      const anyBusy =
+                        loading || alsoAskLoading !== null
+                      return (
+                        <button
+                          key={a.id}
+                          className={
+                            'also-ask-chip' +
+                            (isThisOne ? ' loading' : '')
+                          }
+                          style={{ borderColor: a.color, color: a.color }}
+                          onClick={() => handleAlsoAsk(c, a.id)}
+                          disabled={anyBusy}
+                          title={`Ask ${a.name} the same question`}
+                        >
+                          {isThisOne ? '⟳ asking…' : a.name}
+                        </button>
+                      )
+                    })}
                 </div>
               )}
             </div>
@@ -440,7 +500,7 @@ export default function ChatPanel({
             <SelectedQuote sel={pendingAction} />
             <textarea
               autoFocus
-              placeholder="What do you want to ask about this passage?"
+              placeholder={`Optional: ask something specific. Or just hit ${scholarAction.toLowerCase()}.`}
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={(e) => {
@@ -478,13 +538,15 @@ export default function ChatPanel({
               <button
                 type="submit"
                 className="btn-primary"
-                disabled={loading || !question.trim()}
+                disabled={loading}
               >
                 {loading
                   ? useFullBook
                     ? 'Reading book…'
-                    : 'Asking…'
-                  : 'Ask'}
+                    : 'Thinking…'
+                  : question.trim()
+                  ? 'Ask'
+                  : scholarAction}
               </button>
             </div>
             {error && <div className="error">{error}</div>}

@@ -6,7 +6,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
 from db import init_db, get_conn, DATA_DIR
@@ -122,6 +122,217 @@ def get_document_file(doc_id: str):
     return FileResponse(row["filepath"], media_type="application/pdf")
 
 
+@app.delete("/documents/{doc_id}")
+def delete_document(doc_id: str):
+    """Permanently delete a document: its DB row, its PDF file on disk, and
+    every annotation, conversation, message, message_annotation, and Claude
+    session tied to it. Irreversible."""
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT filepath FROM documents WHERE id = ?", (doc_id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(404, "Document not found")
+        conv_ids = [
+            r["id"]
+            for r in conn.execute(
+                "SELECT id FROM conversations WHERE document_id = ?", (doc_id,)
+            ).fetchall()
+        ]
+        for cid in conv_ids:
+            conn.execute(
+                "DELETE FROM message_annotations WHERE message_id IN "
+                "(SELECT id FROM messages WHERE conversation_id = ?)",
+                (cid,),
+            )
+            conn.execute(
+                "DELETE FROM messages WHERE conversation_id = ?", (cid,)
+            )
+        conn.execute(
+            "DELETE FROM conversations WHERE document_id = ?", (doc_id,)
+        )
+        conn.execute(
+            "DELETE FROM annotations WHERE document_id = ?", (doc_id,)
+        )
+        conn.execute(
+            "DELETE FROM claude_sessions WHERE document_id = ?", (doc_id,)
+        )
+        conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
+
+    # Remove the PDF file from disk. Tolerate it being missing.
+    try:
+        Path(row["filepath"]).unlink(missing_ok=True)
+    except OSError:
+        pass
+
+    return {"ok": True}
+
+
+@app.post("/documents/{doc_id}/reset")
+def reset_document(doc_id: str):
+    """Delete all annotations, conversations, messages, and Claude sessions
+    for this document. The document and its PDF stay. Irreversible."""
+    with get_conn() as conn:
+        if not conn.execute(
+            "SELECT 1 FROM documents WHERE id = ?", (doc_id,)
+        ).fetchone():
+            raise HTTPException(404, "Document not found")
+        # messages and message_annotations are scoped by conversation_id;
+        # collect conv ids first then cascade cleanly.
+        conv_ids = [
+            r["id"]
+            for r in conn.execute(
+                "SELECT id FROM conversations WHERE document_id = ?", (doc_id,)
+            ).fetchall()
+        ]
+        for cid in conv_ids:
+            conn.execute(
+                "DELETE FROM message_annotations WHERE message_id IN "
+                "(SELECT id FROM messages WHERE conversation_id = ?)",
+                (cid,),
+            )
+            conn.execute(
+                "DELETE FROM messages WHERE conversation_id = ?", (cid,)
+            )
+        conn.execute(
+            "DELETE FROM conversations WHERE document_id = ?", (doc_id,)
+        )
+        conn.execute(
+            "DELETE FROM annotations WHERE document_id = ?", (doc_id,)
+        )
+        conn.execute(
+            "DELETE FROM claude_sessions WHERE document_id = ?", (doc_id,)
+        )
+    return {"ok": True}
+
+
+@app.post("/documents/{doc_id}/duplicate")
+def duplicate_document(doc_id: str):
+    """Create a fresh copy of a document (new doc id, same PDF content, no
+    annotations / conversations). Useful for re-reading with a clean slate
+    while preserving the original's annotations."""
+    import secrets
+    with get_conn() as conn:
+        src = conn.execute(
+            "SELECT title, author, filepath, full_text, num_pages "
+            "FROM documents WHERE id = ?",
+            (doc_id,),
+        ).fetchone()
+        if not src:
+            raise HTTPException(404, "Document not found")
+
+        new_id = secrets.token_hex(8)  # 16 hex chars, matches upload format
+        src_path = Path(src["filepath"])
+        if not src_path.exists():
+            raise HTTPException(500, "Source PDF file not found on disk")
+        new_path = PDF_DIR / f"{new_id}.pdf"
+        new_path.write_bytes(src_path.read_bytes())
+
+        new_title = (src["title"] or "Untitled") + " (copy)"
+        conn.execute(
+            """INSERT INTO documents
+               (id, title, author, filepath, full_text, num_pages)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                new_id,
+                new_title,
+                src["author"],
+                str(new_path),
+                src["full_text"],
+                src["num_pages"],
+            ),
+        )
+    return {
+        "id": new_id,
+        "title": new_title,
+        "author": src["author"],
+        "num_pages": src["num_pages"],
+    }
+
+
+@app.get("/documents/{doc_id}/marked-up")
+def get_marked_up_document(doc_id: str):
+    """Return the PDF with highlights and notes burned in as PDF annotations.
+    Uses the stored rects (page-ratio coords) to draw highlight annotations
+    on each page."""
+    import fitz
+
+    with get_conn() as conn:
+        doc_row = conn.execute(
+            "SELECT filepath, title FROM documents WHERE id = ?", (doc_id,)
+        ).fetchone()
+        if not doc_row:
+            raise HTTPException(404, "Document not found")
+        anns = conn.execute(
+            """SELECT id, page, selected_text, rects_json, kind, note_text,
+                      COALESCE(agent_id, '') AS agent_id
+               FROM annotations WHERE document_id = ? AND rects_json IS NOT NULL""",
+            (doc_id,),
+        ).fetchall()
+
+    pdf = fitz.open(doc_row["filepath"])
+    try:
+        for a in anns:
+            page_num = (a["page"] or 1) - 1
+            if page_num < 0 or page_num >= len(pdf):
+                continue
+            page = pdf[page_num]
+            pw, ph = page.rect.width, page.rect.height
+            try:
+                rects = json.loads(a["rects_json"])
+            except Exception:
+                continue
+
+            kind = a["kind"] or "ask"
+            # Colors: ask = amber, highlight = yellow, note = blue.
+            if kind == "note":
+                rgb = (0.29, 0.56, 0.89)  # blue
+            elif kind == "highlight":
+                rgb = (0.91, 0.72, 0.0)  # amber-yellow
+            else:
+                rgb = (0.85, 0.48, 0.24)  # rust (ask)
+
+            quads = []
+            for r in rects:
+                x0 = r["x"] * pw
+                y0 = r["y"] * ph
+                x1 = (r["x"] + r["w"]) * pw
+                y1 = (r["y"] + r["h"]) * ph
+                quads.append(fitz.Rect(x0, y0, x1, y1))
+            if not quads:
+                continue
+
+            hl = page.add_highlight_annot(quads)
+            hl.set_colors(stroke=rgb)
+            content = a["selected_text"] or ""
+            if a["note_text"]:
+                content = f"Note: {a['note_text']}\n\n{content}"
+            elif kind == "ask" and a["agent_id"]:
+                content = (
+                    f"Asked {a['agent_id'].replace('_', ' ')}:\n\n{content}"
+                )
+            hl.set_info(content=content)
+            hl.update()
+
+        out_bytes = pdf.tobytes()
+    finally:
+        pdf.close()
+
+    safe_title = "".join(
+        c if c.isalnum() or c in "-_" else "_"
+        for c in (doc_row["title"] or "document")
+    )[:60]
+    return Response(
+        content=out_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{safe_title}_annotated.pdf"'
+            ),
+        },
+    )
+
+
 class Rect(BaseModel):
     x: float
     y: float
@@ -139,6 +350,11 @@ class AskRequest(BaseModel):
     rects: Optional[list[Rect]] = None
     use_full_book: bool = False
     conversation_id: Optional[int] = None
+    # Optional short label stored as the user-visible message in the chat
+    # thread. When the Ask form is submitted with an empty textarea, this is
+    # set to the scholar's action label (e.g. "Joke") while `question` holds
+    # the full action_prompt (with few-shot examples) that goes to Claude.
+    display_question: Optional[str] = None
 
 
 class AnnotationCreate(BaseModel):
@@ -269,10 +485,15 @@ def ask(req: AskRequest):
                 (req.document_id, effective_agent_id, session_id),
             )
 
+    # Store the user-visible short label if provided, else the full prompt.
+    # The full prompt is what Claude saw; the display version is what the
+    # user sees in the chat thread.
+    stored_user_message = req.display_question or req.question
+
     with get_conn() as conn:
         conn.execute(
             "INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)",
-            (conv_id, "user", req.question),
+            (conv_id, "user", stored_user_message),
         )
         conn.execute(
             "INSERT INTO messages (conversation_id, role, content, used_web) VALUES (?, ?, ?, ?)",

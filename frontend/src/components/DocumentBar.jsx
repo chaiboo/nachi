@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { uploadDocument } from '../api'
+import { uploadDocument, duplicateDocument, deleteDocument } from '../api'
 import Logo from './Logo'
 
 export default function DocumentBar({
@@ -29,6 +29,39 @@ export default function DocumentBar({
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  async function handleDuplicate() {
+    if (!currentDocId) return
+    try {
+      const copy = await duplicateDocument(currentDocId)
+      await refreshDocuments()
+      setCurrentDocId(copy.id)
+    } catch (err) {
+      alert('Duplicate failed: ' + err.message)
+    }
+  }
+
+  async function handleDelete() {
+    if (!currentDocId) return
+    const current = documents.find((d) => d.id === currentDocId)
+    const title = current?.title || 'this document'
+    const ok = confirm(
+      `Delete "${title}"?\n\nThe PDF, all annotations, conversations, and scholar sessions tied to it will be permanently removed. This cannot be undone.`,
+    )
+    if (!ok) return
+    try {
+      await deleteDocument(currentDocId)
+      // Clean up per-doc client state so we don't leak localStorage keys.
+      localStorage.removeItem(`nachi:scholar:${currentDocId}`)
+      localStorage.removeItem(`nachi:fullbook:${currentDocId}`)
+      // Pick the next document if there is one, else null.
+      const remaining = documents.filter((d) => d.id !== currentDocId)
+      setCurrentDocId(remaining.length ? remaining[0].id : null)
+      await refreshDocuments()
+    } catch (err) {
+      alert('Delete failed: ' + err.message)
     }
   }
 
@@ -68,6 +101,26 @@ export default function DocumentBar({
         >
           {uploading ? '…' : '+ Upload'}
         </button>
+        {currentDocId && (
+          <button
+            className="doc-duplicate"
+            onClick={handleDuplicate}
+            aria-label="Duplicate"
+            title="Duplicate: make a fresh copy of this PDF with no annotations"
+          >
+            ⎘
+          </button>
+        )}
+        {currentDocId && (
+          <button
+            className="doc-duplicate doc-delete"
+            onClick={handleDelete}
+            aria-label="Delete"
+            title="Delete this document permanently (PDF, annotations, conversations)"
+          >
+            ✕
+          </button>
+        )}
       </div>
       {current && current.author && (
         <div className="doc-author muted">by {current.author}</div>

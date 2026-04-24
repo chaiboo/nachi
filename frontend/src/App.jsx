@@ -133,7 +133,8 @@ export default function App() {
   }, [currentDocId, refreshAll])
 
   // Restore the last-used scholar for the current document, fall back
-  // to the first agent on the list.
+  // to the first agent on the list. Per-doc: each document starts fresh
+  // and only its own history sticks.
   useEffect(() => {
     if (!agents.length) return
     const key = currentDocId
@@ -144,12 +145,36 @@ export default function App() {
     setAgentIdState(known ? stored : agents[0].id)
   }, [currentDocId, agents])
 
+  // If the current doc has no activity (no annotations, no conversations),
+  // it's effectively fresh — reset its scholar preference to the default
+  // and clear any stale localStorage entry. Avoids the "I reset the doc
+  // but it still defaults to The Jester" surprise.
+  useEffect(() => {
+    if (!currentDocId || !agents.length) return
+    const hasActivity =
+      (annotations?.length || 0) > 0 || (conversations?.length || 0) > 0
+    if (hasActivity) return
+    const key = `nachi:scholar:${currentDocId}`
+    const stored = localStorage.getItem(key)
+    if (stored && stored !== agents[0].id) {
+      localStorage.removeItem(key)
+      setAgentIdState(agents[0].id)
+    }
+  }, [currentDocId, annotations, conversations, agents])
+
   function setAgentId(id) {
     setAgentIdState(id)
     const key = currentDocId
       ? `nachi:scholar:${currentDocId}`
       : 'nachi:scholar:_global'
     if (id) localStorage.setItem(key, id)
+  }
+
+  // Non-persisting version: updates the active dropdown but does NOT
+  // overwrite the stored default for this doc. Used by Also-Ask so a
+  // one-off jump to another scholar doesn't stick as the doc's default.
+  function setAgentIdEphemeral(id) {
+    setAgentIdState(id)
   }
 
   function handleAnchorClick(annotationId) {
@@ -213,6 +238,7 @@ export default function App() {
             agents={agents}
             agentId={agentId}
             setAgentId={setAgentId}
+            setAgentIdEphemeral={setAgentIdEphemeral}
             documentId={currentDocId}
             pendingAction={pendingAction}
             clearPendingAction={() => setPendingAction(null)}
@@ -247,6 +273,7 @@ export default function App() {
           annotations={annotations}
           messageAnnotations={messageAnnotations}
           conversations={conversations}
+          documentId={currentDocId}
           documentTitle={
             documents.find((d) => d.id === currentDocId)?.title
           }

@@ -1,11 +1,17 @@
 import { useMemo } from 'react'
-import { deleteAnnotation, deleteMessageAnnotation } from '../api'
+import {
+  deleteAnnotation,
+  deleteMessageAnnotation,
+  markedUpDocumentUrl,
+  resetDocument,
+} from '../api'
 
 export default function AnnotationsPanel({
   annotations,
   messageAnnotations,
   conversations,
   documentTitle,
+  documentId,
   onClose,
   onJumpToAnnotation,
   onJumpToConversation,
@@ -123,6 +129,32 @@ export default function AnnotationsPanel({
     URL.revokeObjectURL(url)
   }
 
+  function handleDownloadMarkedPdf() {
+    if (!documentId) return
+    // Server sets Content-Disposition, so a plain window.location triggers
+    // a download with the correct filename.
+    window.location.href = markedUpDocumentUrl(documentId)
+  }
+
+  async function handleReset() {
+    if (!documentId) return
+    const confirmed = confirm(
+      'Reset this document?\n\nAll highlights, notes, and scholar conversations for this PDF will be permanently deleted. The PDF itself stays.\n\nThis cannot be undone.',
+    )
+    if (!confirmed) return
+    try {
+      await resetDocument(documentId)
+      // Also clear per-doc client state so the app's memory of this doc
+      // (preferred scholar, full-book toggle) resets to defaults.
+      localStorage.removeItem(`nachi:scholar:${documentId}`)
+      localStorage.removeItem(`nachi:fullbook:${documentId}`)
+      await refreshAll()
+      onClose()
+    } catch (err) {
+      alert('Reset failed: ' + err.message)
+    }
+  }
+
   return (
     <div className="ann-overlay" onClick={onClose}>
       <div className="ann-panel" onClick={(e) => e.stopPropagation()}>
@@ -144,6 +176,20 @@ export default function AnnotationsPanel({
                   title="Download as .txt file"
                 >
                   ⬇ .txt
+                </button>
+                <button
+                  className="ann-export-btn"
+                  onClick={handleDownloadMarkedPdf}
+                  title="Download the PDF with highlights and notes burned in"
+                >
+                  ⬇ marked PDF
+                </button>
+                <button
+                  className="ann-export-btn ann-reset-btn"
+                  onClick={handleReset}
+                  title="Delete all annotations and conversations for this document"
+                >
+                  ⟲ Reset
                 </button>
               </>
             )}

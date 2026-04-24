@@ -72,3 +72,15 @@ export const updateAgent = (id, payload) =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+
+export const resetDocument = (docId) =>
+  j(`${BASE}/documents/${docId}/reset`, { method: 'POST' })
+
+export const duplicateDocument = (docId) =>
+  j(`${BASE}/documents/${docId}/duplicate`, { method: 'POST' })
+
+export const deleteDocument = (docId) =>
+  j(`${BASE}/documents/${docId}`, { method: 'DELETE' })
+
+export const markedUpDocumentUrl = (docId) =>
+  `${BASE}/documents/${docId}/marked-up`

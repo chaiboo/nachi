@@ -32,6 +32,11 @@ def list_agents():
             "name": a["name"],
             "color": a.get("color", "#888888"),
             "description": a.get("description", ""),
+            "action": a.get("action", "Ask"),
+            # Optional full prompt used when the user submits the Ask form
+            # with an empty textarea. If not set, the button label (action)
+            # is sent as the question.
+            "action_prompt": a.get("action_prompt"),
         }
         for a in reg["agents"]
     ]

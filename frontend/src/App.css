@@ -186,6 +186,28 @@ body {
 .doc-upload:hover:not(:disabled) { background: var(--surface-hover); }
 .doc-upload:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.doc-duplicate {
+  background: transparent;
+  color: var(--ink-muted);
+  border: none;
+  border-left: 1px solid var(--rule);
+  padding: 0.3rem 0.55rem;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.doc-duplicate:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--accent);
+}
+
+.doc-delete:hover:not(:disabled) {
+  background: rgba(166, 50, 50, 0.08);
+  color: #a63232;
+}
+
 .doc-ann-btn {
   font-family: inherit;
   font-size: 0.9rem;
@@ -260,6 +282,16 @@ body {
 }
 
 .ann-export-btn:hover { background: var(--surface-hover); }
+
+.ann-export-btn.ann-reset-btn {
+  color: #a63232;
+  border-color: rgba(166, 50, 50, 0.35);
+}
+
+.ann-export-btn.ann-reset-btn:hover {
+  background: rgba(166, 50, 50, 0.08);
+  border-color: #a63232;
+}
 
 .ann-header h3 {
   margin: 0;
@@ -418,7 +450,9 @@ body {
   position: absolute;
   border-radius: 1px;
   transition: background 0.2s, box-shadow 0.2s;
-  mix-blend-mode: multiply;
+  /* No multiply blend: overlapping highlights were darkening text to the
+     point of unreadability. Fill is also kept light so stacked highlights
+     stay readable. */
 }
 
 .highlight-rect.clickable {
@@ -692,7 +726,26 @@ body {
 
 .also-ask-chip:disabled {
   opacity: 0.5;
-  cursor: wait;
+  cursor: progress;
+}
+
+.also-ask-chip.loading {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+  animation: also-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes also-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+/* Global busy state — when any ask is in flight, the whole page signals
+   progress on the cursor. Clickable controls fight back with their own
+   cursor values, but idle regions pick this up. */
+.nachi-busy,
+.nachi-busy body {
+  cursor: progress;
 }
 
 /* Modal */
