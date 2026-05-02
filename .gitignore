@@ -33,3 +33,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local Mac .app bundle (built per-machine; has hardcoded paths)
+Nachi.app/

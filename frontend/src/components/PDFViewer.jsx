@@ -113,7 +113,12 @@ export default function PDFViewer({
     if (!ann) return
     const pageEl = pageRefs.current[ann.page]
     if (pageEl) pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [focusAnnotationId, annotations])
+    // Only scroll when focusAnnotationId itself changes — not when the
+    // annotations list updates (e.g. after creating a new highlight). That
+    // re-fire was causing the PDF to jump to a stale focus target every
+    // time the user added a highlight.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusAnnotationId])
 
   // Dismiss the annotation picker on any outside click or Escape.
   useEffect(() => {

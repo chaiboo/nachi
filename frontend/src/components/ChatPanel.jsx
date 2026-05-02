@@ -35,6 +35,11 @@ export default function ChatPanel({
   const [replyText, setReplyText] = useState('')
   // { convId, agentId } identifying the specific also-ask chip in flight.
   const [alsoAskLoading, setAlsoAskLoading] = useState(null)
+  // Optimistic placeholders for in-flight asks. We support multiple in
+  // parallel so the user can fire and keep reading without being blocked.
+  // Each entry: { id, agentId, agentName, agentColor, displayQuestion,
+  //               selected_text, page, started_at, kind }
+  const [pendingAsks, setPendingAsks] = useState([])
   const convRefs = useRef({})
 
   useEffect(() => {
@@ -98,26 +103,45 @@ export default function ChatPanel({
     if (!pendingAction || !documentId || !agentId) return
     const typed = question.trim()
     const prompt = typed || scholarDefaultPrompt
-    // When no text was typed, store the scholar's short action label (e.g.
-    // "Joke") as the user-visible chat message instead of the full few-shot
-    // prompt that actually goes to Claude.
     const displayQuestion = typed ? null : scholarAction
-    setLoading(true)
+    // Capture pendingAction values up front so we don't depend on the
+    // closure after we clear it (and so subsequent asks don't trample).
+    const sel = pendingAction.text
+    const para = pendingAction.paragraph
+    const pg = pendingAction.page
+    const rects = pendingAction.rects
+    const useBook = useFullBook
+    const askId = `ask-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     setError(null)
+    // Optimistic placeholder for THIS ask. Multiple can stack up.
+    setPendingAsks((prev) => [
+      ...prev,
+      {
+        id: askId,
+        agentId,
+        agentName: activeAgent?.name || agentId,
+        agentColor: activeAgent?.color || '#888',
+        displayQuestion: displayQuestion || prompt,
+        selected_text: sel,
+        page: pg,
+        started_at: Date.now(),
+        kind: 'ask',
+      },
+    ])
+    setQuestion('')
+    clearPendingAction()
     try {
       const res = await ask({
         agent_id: agentId,
         document_id: documentId,
-        selected_text: pendingAction.text,
-        paragraph: pendingAction.paragraph,
-        page: pendingAction.page,
-        rects: pendingAction.rects,
-        use_full_book: useFullBook,
+        selected_text: sel,
+        paragraph: para,
+        page: pg,
+        rects,
+        use_full_book: useBook,
         question: prompt,
         display_question: displayQuestion,
       })
-      setQuestion('')
-      clearPendingAction()
       await refreshAll()
       if (res?.conversation_id) {
         setFocusConversationId?.(res.conversation_id)
@@ -125,7 +149,7 @@ export default function ChatPanel({
     } catch (err) {
       setError(String(err.message || err))
     } finally {
-      setLoading(false)
+      setPendingAsks((prev) => prev.filter((p) => p.id !== askId))
     }
   }
 
@@ -187,23 +211,40 @@ export default function ChatPanel({
     setAlsoAskLoading({ convId: conv.id, agentId: targetAgentId })
     setError(null)
     try {
-      const res = await ask({
-        agent_id: targetAgentId,
-        document_id: documentId,
-        selected_text: conv.selected_text,
-        paragraph: conv.paragraph || null,
-        page: conv.page,
-        rects,
-        use_full_book: false,
-        question: prompt,
-        display_question: displayQuestion,
-      })
-      await refreshAll()
-      // Make the top-of-panel scholar dropdown follow the user's choice,
-      // but don't persist it as the doc's default (this was a one-off).
-      setAgentIdEphemeral?.(targetAgentId)
-      if (res?.conversation_id) {
-        setFocusConversationId?.(res.conversation_id)
+      const askId = `also-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      setPendingAsks((prev) => [
+        ...prev,
+        {
+          id: askId,
+          agentId: targetAgentId,
+          agentName: target?.name || targetAgentId,
+          agentColor: target?.color || '#888',
+          displayQuestion: displayQuestion || prompt,
+          selected_text: conv.selected_text,
+          page: conv.page,
+          started_at: Date.now(),
+          kind: 'also_ask',
+        },
+      ])
+      try {
+        const res = await ask({
+          agent_id: targetAgentId,
+          document_id: documentId,
+          selected_text: conv.selected_text,
+          paragraph: conv.paragraph || null,
+          page: conv.page,
+          rects,
+          use_full_book: false,
+          question: prompt,
+          display_question: displayQuestion,
+        })
+        await refreshAll()
+        setAgentIdEphemeral?.(targetAgentId)
+        if (res?.conversation_id) {
+          setFocusConversationId?.(res.conversation_id)
+        }
+      } finally {
+        setPendingAsks((prev) => prev.filter((p) => p.id !== askId))
       }
     } catch (err) {
       setError(String(err.message || err))
@@ -212,36 +253,60 @@ export default function ChatPanel({
     }
   }
 
-  // Global cursor feedback: any in-flight request puts the whole page into
-  // progress state so the user always has a visual signal, not just the chip.
+  // Global cursor feedback: only the user-blocking ones (submit-pressed
+  // forms) put the page in progress state. Background asks shouldn't make
+  // the whole UI feel busy.
   useEffect(() => {
-    const busy = loading || alsoAskLoading !== null
+    const busy = loading
     const root = document.documentElement
     if (busy) root.classList.add('nachi-busy')
     else root.classList.remove('nachi-busy')
     return () => root.classList.remove('nachi-busy')
-  }, [loading, alsoAskLoading])
+  }, [loading])
+
 
   async function handleReplySubmit(e) {
     e.preventDefault()
     if (!replyState || !replyText.trim()) return
-    setLoading(true)
+    const convId = replyState.conversationId
+    const conv = conversations.find((c) => c.id === convId)
+    const agent = agents.find((a) => a.id === conv?.agent_id)
+    const replyContent = replyText.trim()
+    const quote = replyState.quote
+    const displayContent = quote
+      ? `[quoting: ${quote}]\n\n${replyContent}`
+      : replyContent
+    const askId = `reply-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     setError(null)
+    setPendingAsks((prev) => [
+      ...prev,
+      {
+        id: askId,
+        agentId: conv?.agent_id,
+        agentName: agent?.name || conv?.agent_id || 'Scholar',
+        agentColor: conv?.color || agent?.color || '#888',
+        displayQuestion: displayContent,
+        selected_text: null,
+        page: conv?.page,
+        started_at: Date.now(),
+        kind: 'reply',
+        conversationId: convId,
+      },
+    ])
+    setReplyText('')
+    setReplyState(null)
     try {
-      const convId = replyState.conversationId
       await reply({
         conversation_id: convId,
-        question: replyText.trim(),
-        quote: replyState.quote,
+        question: replyContent,
+        quote,
       })
-      setReplyText('')
-      setReplyState(null)
       await refreshAll()
       setFocusConversationId?.(convId)
     } catch (err) {
       setError(String(err.message || err))
     } finally {
-      setLoading(false)
+      setPendingAsks((prev) => prev.filter((p) => p.id !== askId))
     }
   }
 
@@ -336,7 +401,8 @@ export default function ChatPanel({
     conversations.length > 0 ||
     (messageAnnotations || []).length > 0 ||
     pendingAction ||
-    replyState
+    replyState ||
+    pendingAsks.length > 0
 
   return (
     <div className="chat-panel">
@@ -493,6 +559,10 @@ export default function ChatPanel({
               )}
             </div>
           </div>
+        ))}
+
+        {pendingAsks.map((p) => (
+          <PendingAsk key={p.id} pending={p} />
         ))}
 
         {showAsk && (
@@ -709,6 +779,58 @@ function getFlatTextOffsets(container, range) {
  * Rough: applies background styles to text nodes by walking the rendered
  * DOM after mount and wrapping matching ranges with spans.
  */
+function PendingAsk({ pending }) {
+  // Optimistic placeholder for an in-flight ask. Renders the user's question
+  // and a "thinking…" beat for the scholar.
+  const ref = useRef(null)
+  useEffect(() => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [])
+  return (
+    <div className="conv conv-pending" ref={ref}>
+      {pending.selected_text && (
+        <div
+          className="conv-anchor pending-anchor"
+          style={{
+            borderLeftColor: pending.agentColor,
+            borderRightColor: pending.agentColor,
+          }}
+        >
+          <div
+            className="anchor-label"
+            style={{ color: pending.agentColor }}
+          >
+            {pending.page ? `p. ${pending.page}` : '—'} ·{' '}
+            {pending.agentName}
+          </div>
+          <div className="anchor-text">"{pending.selected_text}"</div>
+        </div>
+      )}
+      <div className="msg msg-user">
+        <div className="msg-user-text">{pending.displayQuestion}</div>
+      </div>
+      <div className="msg msg-assistant">
+        <div
+          className="msg-agent-label"
+          style={{ color: pending.agentColor }}
+        >
+          <span
+            className="msg-agent-dot"
+            style={{ background: pending.agentColor }}
+          />
+          {pending.agentName}
+        </div>
+        <div className="msg-assistant-text msg-pending">
+          <span className="pending-dots">
+            <span></span><span></span><span></span>
+          </span>
+          <span className="pending-elapsed">thinking…</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AnnotatedMarkdown({ content, annotations }) {
   // NOTE: visual highlighting of text within a rendered markdown tree is
   // fragile (DOM mutation conflicts with React). For now, render the markdown

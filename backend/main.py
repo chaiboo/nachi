@@ -15,6 +15,7 @@ from agent_runner import (
     assemble_prompt,
     invoke_claude,
     agent_color,
+    agent_model,
     classify_agent,
     draft_agent_persona,
     add_agent_to_registry,
@@ -440,20 +441,23 @@ def ask(req: AskRequest):
             )
             conv_id = cur.lastrowid
 
-    # Session handling for full-book mode: one Claude Code session per
-    # (doc, agent). First call includes the book; subsequent resumes don't.
+    # Session resumption for ALL asks on this (doc, agent) pair, not just
+    # full-book mode. First call sets the system prompt + persona; every
+    # subsequent ask resumes the session — Claude Code re-sends the prior
+    # transcript and Anthropic's prompt cache (5-min TTL) keeps that fast.
+    # The persona and prior conversation are not re-sent in our user_message.
     existing_session_id = None
-    if req.use_full_book:
-        with get_conn() as conn:
-            row = conn.execute(
-                "SELECT session_id FROM claude_sessions WHERE document_id = ? AND agent_id = ?",
-                (req.document_id, effective_agent_id),
-            ).fetchone()
-            if row:
-                existing_session_id = row["session_id"]
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT session_id FROM claude_sessions WHERE document_id = ? AND agent_id = ?",
+            (req.document_id, effective_agent_id),
+        ).fetchone()
+        if row:
+            existing_session_id = row["session_id"]
 
     resuming = bool(existing_session_id)
-    # On resume, the book is already in the session transcript — don't re-include.
+    # On resume, the book + persona + prior history are already in the
+    # session — don't re-include them in this turn's message.
     full_book = doc["full_text"] if (req.use_full_book and not resuming) else None
 
     system_prompt, user_message = assemble_prompt(
@@ -473,12 +477,14 @@ def ask(req: AskRequest):
             user_message,
             session_id=existing_session_id,
             resume=resuming,
+            model=agent_model(effective_agent_id),
         )
     except (subprocess.TimeoutExpired, RuntimeError) as e:
         raise HTTPException(500, f"Agent call failed: {e}")
 
-    # Persist the session for future full-book asks on this (doc, agent).
-    if req.use_full_book and not resuming and session_id:
+    # Always persist the session id after the first call so subsequent
+    # asks on this (doc, agent) pair can resume.
+    if not resuming and session_id:
         with get_conn() as conn:
             conn.execute(
                 "INSERT OR REPLACE INTO claude_sessions (document_id, agent_id, session_id) VALUES (?, ?, ?)",
@@ -639,6 +645,7 @@ def reply(req: ReplyRequest):
             answer, _, used_web = invoke_claude(
                 system_prompt, user_message,
                 session_id=existing_session_id, resume=True,
+                model=agent_model(conv["agent_id"]),
             )
         except (subprocess.TimeoutExpired, RuntimeError) as e:
             raise HTTPException(500, f"Agent call failed: {e}")
@@ -653,7 +660,11 @@ def reply(req: ReplyRequest):
             f"Prior conversation:\n{convo}\n\n---\n\n{user_message}"
         )
         try:
-            answer, _, used_web = invoke_claude(system_prompt, full_user, session_id=None, resume=False)
+            answer, _, used_web = invoke_claude(
+                system_prompt, full_user,
+                session_id=None, resume=False,
+                model=agent_model(conv["agent_id"]),
+            )
         except (subprocess.TimeoutExpired, RuntimeError) as e:
             raise HTTPException(500, f"Agent call failed: {e}")
 

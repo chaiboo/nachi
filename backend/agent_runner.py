@@ -33,13 +33,20 @@ def list_agents():
             "color": a.get("color", "#888888"),
             "description": a.get("description", ""),
             "action": a.get("action", "Ask"),
-            # Optional full prompt used when the user submits the Ask form
-            # with an empty textarea. If not set, the button label (action)
-            # is sent as the question.
             "action_prompt": a.get("action_prompt"),
+            "model": a.get("model"),
         }
         for a in reg["agents"]
     ]
+
+
+def agent_model(agent_id: str) -> str | None:
+    """Per-scholar model override from the registry. None = Claude Code default."""
+    reg = load_registry()
+    for a in reg["agents"]:
+        if a["id"] == agent_id:
+            return a.get("model")
+    return None
 
 
 def add_agent_to_registry(agent_id: str, name: str, color: str, filename: str, description: str = "") -> None:
@@ -227,6 +234,7 @@ def invoke_claude(
     resume: bool = False,
     timeout: int = 300,
     allow_web: bool = True,
+    model: str | None = None,
 ) -> tuple[str, str, bool]:
     """One-shot Claude Code invocation. Returns (answer, session_id, used_web).
 
@@ -236,6 +244,9 @@ def invoke_claude(
     If session_id is given without resume, pins the new session to that UUID.
     """
     cmd = ["claude", "-p", user_message, "--output-format", "json"]
+
+    if model:
+        cmd += ["--model", model]
 
     if resume and session_id:
         cmd += ["--resume", session_id]

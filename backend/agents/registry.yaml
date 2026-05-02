@@ -4,6 +4,7 @@ agents:
   file: generalist.md
   color: '#4b5563'
   action: Analyze
+  model: claude-opus-4-7
   description: No discipline framing — Claude responding directly. The sensible default
     when you just want a straight answer rather than a specialist's slant.
 - id: religious_studies
@@ -11,6 +12,7 @@ agents:
   file: religious_studies.md
   color: '#d97a3c'
   action: Analyze
+  model: claude-opus-4-7
   description: Historian of religion. Good for figures, movements, and the academic
     reception of religious phenomena.
 - id: western_esotericism
@@ -18,6 +20,7 @@ agents:
   file: western_esotericism.md
   color: '#8a5cb8'
   action: Analyze
+  model: claude-opus-4-7
   description: Specialist in Hermetic, Kabbalistic, theosophical, and occult currents.
     Good for figures and currents in the Western esoteric tradition.
 - id: religious_media_theorist
@@ -25,6 +28,7 @@ agents:
   file: religious_media_theorist.md
   color: '#3b9d7a'
   action: Analyze
+  model: claude-opus-4-7
   description: Media theorist who studies religious television and televangelism —
     prosperity gospel, megachurch broadcasting, the political economy of religious
     media.
@@ -33,6 +37,7 @@ agents:
   file: digital_humanities_scholar.md
   color: '#2e8b8b'
   action: Analyze
+  model: claude-opus-4-7
   description: Computational literary and cultural analysis. Reads passages for the
     empirical question implied — what corpus, what network, what data would test
     the claim. Refuses generic close reading.
@@ -41,6 +46,7 @@ agents:
   file: literary_theorist.md
   color: '#9c3d52'
   action: Close read
+  model: claude-opus-4-7
   description: Formal and rhetorical analysis — genre, voice, figuration, narrative
     structure. The one who actually does close reading well when close reading is
     what a text needs.
@@ -49,6 +55,7 @@ agents:
   file: philosopher.md
   color: '#4a5b8e'
   action: Analyze
+  model: claude-opus-4-7
   description: Argument reconstruction, conceptual analysis, history of ideas. Reads
     any passage for the logical move underneath. Comfortable across the analytic/continental
     divide.
@@ -57,6 +64,7 @@ agents:
   file: historian.md
   color: '#b87333'
   action: Analyze
+  model: claude-opus-4-7
   description: Periodization, sources, causation, historiography. Reads for claims
     about time — what happened when, on what evidence, and whose account is being
     elided.
@@ -65,6 +73,7 @@ agents:
   file: sociologist.md
   color: '#6b7a3f'
   action: Analyze
+  model: claude-opus-4-7
   description: Structural analysis — institutions, fields, capital, habitus. Bourdieu-heavy.
     Reads any intellectual claim as also a position-taking in a disciplinary field.
 - id: anthropologist
@@ -72,6 +81,7 @@ agents:
   file: anthropologist.md
   color: '#a36b3e'
   action: Analyze
+  model: claude-opus-4-7
   description: Ethnographic close attention to practice, ritual, and cultural logic.
     Thick description via Geertz, the category-of-religion critique via Asad, politics-of-piety
     via Mahmood. Asks what's being classified as what, and on whose terms.
@@ -80,6 +90,7 @@ agents:
   file: philologist.md
   color: '#7a5a3e'
   action: Check the text
+  model: claude-opus-4-7
   description: Textual scholarship — manuscript variants, translation choices, etymology,
     the material history of the words on the page. Asks which edition, whose translation,
     from what source.
@@ -88,6 +99,7 @@ agents:
   file: crank.md
   color: '#8e3a5a'
   action: Push back
+  model: claude-opus-4-7
   description: The one who won't let you have a settled opinion. Obsessively holds
     the strongest opposing view in play; refuses monolithic readings of any tradition.
     Sen / Ganeri lineage, draws on Indic, Islamic, and other formal debate traditions.
@@ -96,6 +108,7 @@ agents:
   file: jester.md
   color: '#e5a517'
   action: Joke
+  model: claude-haiku-4-5-20251001
   action_prompt: |
     Write ONE joke about the selected passage above. Under 25 words. Not an analysis. Not an observation. Not a critique. A joke.
 
@@ -121,6 +134,7 @@ agents:
   file: rabbit_hole.md
   color: '#5d8c6e'
   action: Chase it
+  model: claude-opus-4-7
   description: Follows every thread, finds the obscure connection three hops away.
     Tangents are the feature. Useful when you want adjacent-possible territory you
     wouldn't have reached yourself.
@@ -129,6 +143,7 @@ agents:
   file: misreader.md
   color: '#3d3d3d'
   action: Misread
+  model: claude-haiku-4-5-20251001
   description: Deliberately reads your question or passage in its worst or weirdest
     sense. Diagnostic sparring partner — shows you the ambiguities you didn't know
     were there.
@@ -137,6 +152,7 @@ agents:
   file: dangling_modifier.md
   color: '#b84d78'
   action: React
+  model: claude-haiku-4-5-20251001
   description: Finds the sexual double meanings in every passage. Lewd comedy with
     good timing. The name is a grammar pun (dangling modifier is real; "dangling"
     is also a thing).
